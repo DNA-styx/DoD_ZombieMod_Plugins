@@ -1,3 +1,23 @@
+/**
+ * =============================================================================
+ * DoD:S ZM - Barricade Builder Skill
+ * Human skill plugin for moving props to build barricades
+ * 
+ * Based on "Gravity Gun" by Dron-elektron
+ * Original: https://github.com/dronelektron/sm-gravity-gun
+ * 
+ * Modifications by claude.ai (guided by DNA.styx):
+ * - Simplified from player-grabbing to prop-only manipulation
+ * - Integrated with DoD:S Zombie Mod skill system
+ * - Ray trace-based prop selection (crosshair aim)
+ * - American knife activation with right-click
+ * - Removed admin systems, menus, and configuration
+ * - Added natural prop settling on release
+ * 
+ * Version: 1.0.6
+ * =============================================================================
+ */
+
 #include <sourcemod>
 #include <sdktools>
 #include <dod_zm>  // Include the ZM API
@@ -5,7 +25,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.6"
 #define PLUGIN_NAME "DoD:S ZM Human Skill - Barricade Builder"
 #define PLUGIN_AUTHOR "Dron-elektron, modified by claude.ai guided by DNA.styx"
 #define PLUGIN_DESCRIPTION "Human skill: Pick up and place in-game props with knife right-click"
@@ -48,9 +68,6 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-    // Hook events
-    HookEvent("player_death", Event_PlayerDeath);
-    
     PrintToServer("[ZM Barricade Builder] v%s loaded successfully", PLUGIN_VERSION);
 }
 
@@ -125,6 +142,14 @@ void ResetClientState(int client) {
 // ZM API FORWARDS
 // ============================================================================
 
+public void ZM_OnSkillAssigned(int client, ZMSkillID skillID)
+{
+    if (skillID == g_SkillID && ZM_IsClientHuman(client))
+    {
+        ZM_PrintToChat(client, "Barricade Builder equipped! Use knife right-click to move props.");
+    }
+}
+
 public void ZM_OnRoundStart()
 {
     // Release all props at round start
@@ -143,15 +168,10 @@ public void ZM_OnClientDeath(int client)
     ReleaseProp(client);
 }
 
-// ============================================================================
-// EVENT HANDLERS
-// ============================================================================
-
-public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-    int client = GetClientOfUserId(event.GetInt("userid"));
-    if (client > 0) {
-        ReleaseProp(client);
-    }
+public void ZM_OnClientSpawn(int client, ZMTeam team)
+{
+    // Reset state when player spawns
+    ResetClientState(client);
 }
 
 // ============================================================================
