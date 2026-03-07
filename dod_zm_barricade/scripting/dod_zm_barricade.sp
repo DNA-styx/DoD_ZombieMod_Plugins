@@ -26,8 +26,8 @@
 #pragma newdecls required
 
 #define PLUGIN_VERSION "1.0.6"
-#define PLUGIN_NAME "DoD:S ZM Human Skill - Barricade Builder"
-#define PLUGIN_AUTHOR "Dron-elektron, modified by claude.ai guided by DNA.styx"
+#define PLUGIN_NAME "DoD:S ZM - Human Skill - Barricade Builder"
+#define PLUGIN_AUTHOR "Based on code by Dron-elektron, modified by claude.ai guided by DNA.styx"
 #define PLUGIN_DESCRIPTION "Human skill: Pick up and place in-game props with knife right-click"
 
 // Constants
@@ -64,7 +64,7 @@ public Plugin myinfo = {
     author = PLUGIN_AUTHOR,
     description = PLUGIN_DESCRIPTION,
     version = PLUGIN_VERSION,
-    url = ""
+    url = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
 };
 
 public void OnPluginStart() {
