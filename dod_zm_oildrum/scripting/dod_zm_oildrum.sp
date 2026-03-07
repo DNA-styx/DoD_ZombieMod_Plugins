@@ -1,3 +1,9 @@
+/**
+ * Based on:
+ * [ANY] Explosive Oildrum Spawner! by KTM
+ * https://forums.alliedmods.net/showthread.php?t=194301
+ */
+
 #include <sourcemod>
 #include <sdktools>
 #include <dod_zm>
@@ -270,7 +276,7 @@ public Action Timer_DrumReady(Handle timer, int userId)
             && ZM_IsClientHuman(client)
             && ZM_GetClientSkill(client) == g_SkillID)
         {
-            ZM_PrintToChat(client, "Your drum is ready to deploy!");
+            ZM_PrintToChat(client, "New drum is ready!");
         }
     }
 
