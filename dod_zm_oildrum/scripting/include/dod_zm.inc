@@ -5,7 +5,7 @@
  * This include file defines the API for creating modular human skill plugins
  * that integrate with the main Zombie Mod plugin.
  * 
- * Version: 1.0.0
+ * Version: 1.1.0
  * =============================================================================
  */
 

@@ -5,7 +5,7 @@
  * This include file defines the API for creating modular human skill plugins
  * that integrate with the main Zombie Mod plugin.
  * 
- * Version: 1.0.0
+ * Version: 1.1.0
  * =============================================================================
  */
 
@@ -171,3 +171,48 @@ public void __pl_dod_zm_SetNTVOptional()
 	MarkNativeAsOptional("ZM_IsModActive");
 }
 #endif
+
+// ============================================================================
+// MESSAGE PREFIXES - Standard formatting for chat messages
+// ============================================================================
+
+/**
+ * Prefix for messages sent to individual players
+ * Color: Olive/Yellow - indicates targeted message
+ * Usage: PrintToChat(client, ZM_PREFIX_PERSONAL " Your message");
+ */
+#define ZM_PREFIX_PERSONAL "\x04[ZM]\x01"
+
+/**
+ * Prefix for messages broadcast to all players
+ * Color: Green - indicates server-wide message
+ * Usage: PrintToChatAll(ZM_PREFIX_BROADCAST " Server message");
+ */
+#define ZM_PREFIX_BROADCAST "\x03[ZM]\x01"
+
+/**
+ * Helper function: Send personal message to one client
+ * 
+ * @param client    Client to send message to
+ * @param format    Message format string
+ * @param ...       Format arguments
+ */
+stock void ZM_PrintToChat(int client, const char[] format, any ...)
+{
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 3);
+	PrintToChat(client, "%s %s", ZM_PREFIX_PERSONAL, buffer);
+}
+
+/**
+ * Helper function: Broadcast message to all clients
+ * 
+ * @param format    Message format string
+ * @param ...       Format arguments
+ */
+stock void ZM_PrintToChatAll(const char[] format, any ...)
+{
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 2);
+	PrintToChatAll("%s %s", ZM_PREFIX_BROADCAST, buffer);
+}
