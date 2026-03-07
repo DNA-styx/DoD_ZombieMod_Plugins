@@ -25,8 +25,8 @@
 public Plugin myinfo =
 {
     name = PLUGIN_NAME,
-    author = "KTM, Converted for ZM by ChatGPT & claude.ai guided by DNA.styx",
-    description = "Knife right-click to deploy explosive oil drums",
+    author = "KTM, Modified by ChatGPT & claude.ai guided by DNA.styx",
+    description = "Human skill: Knife right-click to deploy explosive oil drums",
     version = PLUGIN_VERSION,
     url = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
 };
