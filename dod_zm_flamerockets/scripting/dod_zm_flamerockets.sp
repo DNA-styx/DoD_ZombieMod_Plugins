@@ -3,58 +3,63 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <sdkhooks>
 
-// ============================================================================
-// Plugin Info
-// ============================================================================
+/**
+ * =============================================================================
+ * DoD:S ZM - Flame Rockets
+ *
+ * Rocket launchers ignite players on hit and deal bonus damage.
+ * =============================================================================
+ */
 
 public Plugin myinfo =
 {
     name        = "DoD:S ZM - Flame Rockets",
-    author      = "donkey",
+    author      = "donkey, modified for ZombieMod by Claude.ai guided by DNA.styx",
     description = "Rocket launchers ignite players on hit",
-    version     = "1.0.0",
-    url         = "https://basemod.net"
+    version     = "1.0.2",
+    url         = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
 };
 
-// ============================================================================
-// Globals
-// ============================================================================
+/* ============================================================================
+ * Globals
+ * ============================================================================ */
 
 ConVar g_CvarTime;
 ConVar g_CvarMulti;
 ConVar g_CvarAmmo;
 
 float g_fBurnTime;
-float g_fBurnMulti;
+float g_fDmgMulti;
 int   g_iAmmo;
 
-// Weapons to check in player_hurt
+/* Weapon names reported by player_hurt */
 static const char g_sRocketWeapons[][] =
 {
     "bazooka",
     "pschreck",
-    "rocket_bazooka",
-    "rocket_pschreck"
+    "rocket_bazooka",   /* splash damage */
+    "rocket_pschreck"   /* splash damage */
 };
 
-// Weapon classnames to scan on spawn
+/* Weapon classnames to scan for on spawn */
 static const char g_sRocketClasses[][] =
 {
     "weapon_bazooka",
     "weapon_pschreck"
 };
 
-// ============================================================================
-// Plugin Start
-// ============================================================================
+/* ============================================================================
+ * Plugin Start
+ * ============================================================================ */
 
 public void OnPluginStart()
 {
     g_CvarTime = CreateConVar(
         "zm_flamerocket_time",
         "3.0",
-        "Base burn duration in seconds applied on any rocket hit",
+        "Burn duration in seconds applied on any rocket hit",
         _,
         true, 0.0,
         true, 60.0
@@ -62,10 +67,10 @@ public void OnPluginStart()
 
     g_CvarMulti = CreateConVar(
         "zm_flamerocket_multi",
-        "0.1",
-        "Extra burn seconds added per point of rocket damage (burn = time + damage * multi)",
+        "3.0",
+        "Damage multiplier applied to rocket hits (1.0 = no change)",
         _,
-        true, 0.0,
+        true, 1.0,
         true, 10.0
     );
 
@@ -82,35 +87,69 @@ public void OnPluginStart()
     g_CvarMulti.AddChangeHook(OnCvarChanged);
     g_CvarAmmo.AddChangeHook(OnCvarChanged);
 
-    // Load initial values
-    g_fBurnTime  = g_CvarTime.FloatValue;
-    g_fBurnMulti = g_CvarMulti.FloatValue;
-    g_iAmmo      = g_CvarAmmo.IntValue;
+    /* Load initial values */
+    g_fBurnTime = g_CvarTime.FloatValue;
+    g_fDmgMulti = g_CvarMulti.FloatValue;
+    g_iAmmo     = g_CvarAmmo.IntValue;
 
     HookEvent("player_hurt",  Event_PlayerHurt);
     HookEvent("player_spawn", Event_PlayerSpawn);
 
+    /* Hook damage for any clients already in game (late load) */
+    for (int i = 1; i <= MaxClients; i++)
+        if (IsClientInGame(i))
+            SDKHook(i, SDKHook_OnTakeDamage, OnTakeDamage);
+
     AutoExecConfig(true, "dod_zm_flamerockets", "zombiemod");
 }
 
-// ============================================================================
-// CVar change handler
-// ============================================================================
+/* ============================================================================
+ * CVar change handler
+ * ============================================================================ */
 
 public void OnCvarChanged(ConVar cvar, const char[] oldValue, const char[] newValue)
 {
-    g_fBurnTime  = g_CvarTime.FloatValue;
-    g_fBurnMulti = g_CvarMulti.FloatValue;
-    g_iAmmo      = g_CvarAmmo.IntValue;
+    g_fBurnTime = g_CvarTime.FloatValue;
+    g_fDmgMulti = g_CvarMulti.FloatValue;
+    g_iAmmo     = g_CvarAmmo.IntValue;
 }
 
-// ============================================================================
-// player_hurt — apply burn on rocket hit
-// ============================================================================
+/* ============================================================================
+ * OnClientPutInServer - hook damage per client
+ * ============================================================================ */
+
+public void OnClientPutInServer(int client)
+{
+    SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+}
+
+/* ============================================================================
+ * OnTakeDamage - multiply damage for rocket projectiles
+ * ============================================================================ */
+
+public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage,
+    int &damagetype, int &weapon, float damageForce[3], float damagePosition[3])
+{
+    if (inflictor <= 0 || !IsValidEntity(inflictor))
+        return Plugin_Continue;
+
+    char classname[32];
+    GetEntityClassname(inflictor, classname, sizeof(classname));
+
+    if (strcmp(classname, "rocket_bazooka", false) != 0 &&
+        strcmp(classname, "rocket_pschreck", false) != 0)
+        return Plugin_Continue;
+
+    damage *= g_fDmgMulti;
+    return Plugin_Changed;
+}
+
+/* ============================================================================
+ * player_hurt - apply burn on rocket hit
+ * ============================================================================ */
 
 public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 {
-    // Identify the weapon that caused damage
     char weapon[32];
     event.GetString("weapon", weapon, sizeof(weapon));
 
@@ -132,20 +171,15 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
     if (!victim || !IsClientInGame(victim) || !IsPlayerAlive(victim))
         return;
 
-    int damage = event.GetInt("damageamount");
-
-    float burnDuration = g_fBurnTime + (float(damage) * g_fBurnMulti);
-
-    if (burnDuration <= 0.0)
+    if (g_fBurnTime <= 0.0)
         return;
 
-    IgniteEntity(victim, burnDuration);
-
+    IgniteEntity(victim, g_fBurnTime);
 }
 
-// ============================================================================
-// player_spawn — set rocket ammo
-// ============================================================================
+/* ============================================================================
+ * player_spawn - set rocket reserve ammo
+ * ============================================================================ */
 
 public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
@@ -154,7 +188,7 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
     if (!client || !IsClientInGame(client))
         return;
 
-    // Short delay to allow weapon grants to complete
+    /* Short delay to allow weapon grants to complete */
     CreateTimer(0.2, Timer_SetAmmo, GetClientUserId(client));
 }
 
@@ -165,7 +199,7 @@ public Action Timer_SetAmmo(Handle timer, int userId)
     if (!client || !IsClientInGame(client) || !IsPlayerAlive(client))
         return Plugin_Stop;
 
-    // Scan inventory for a rocket launcher
+    /* Scan inventory for a rocket launcher */
     for (int slot = 0; slot < 5; slot++)
     {
         int weapon = GetPlayerWeaponSlot(client, slot);
@@ -180,7 +214,6 @@ public Action Timer_SetAmmo(Handle timer, int userId)
         {
             if (strcmp(classname, g_sRocketClasses[i], false) == 0)
             {
-                // Get the ammo type index from the weapon entity
                 int ammoType = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
 
                 if (ammoType != -1)
