@@ -25,8 +25,8 @@
 public Plugin myinfo =
 {
     name = PLUGIN_NAME,
-    author = "KTM, Modified by ChatGPT & claude.ai guided by DNA.styx",
-    description = "Human skill: Knife right-click to deploy explosive oil drums",
+    author = "KTM, Converted for ZM by ChatGPT & claude.ai guided by DNA.styx",
+    description = "Human skill: Knife or pistol right-click to deploy explosive oil drums",
     version = PLUGIN_VERSION,
     url = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
 };
@@ -45,6 +45,7 @@ int   g_HaloSprite;
 float  g_LastSpawn[MAXPLAYERS + 1];
 int    g_LastButtons[MAXPLAYERS + 1];
 Handle g_ReadyTimer[MAXPLAYERS + 1];   // Fires when cooldown expires
+float  g_LastCooldownMsg[MAXPLAYERS + 1]; // Throttle cooldown chat messages
 
 int redColor[4] = {200, 25, 25, 255};
 
@@ -85,7 +86,7 @@ public void OnAllPluginsLoaded()
     {
         g_SkillID = ZM_RegisterHumanSkill(
             "Oil Drum Spawner",
-            "Knife right-click to deploy explosive oil drums"
+            "Right-click knife or pistol to deploy explosive oil drum"
         );
     }
 }
@@ -97,7 +98,7 @@ public void OnLibraryAdded(const char[] name)
     {
         g_SkillID = ZM_RegisterHumanSkill(
             "Oil Drum Spawner",
-            "Knife right-click to deploy explosive oil drums"
+            "Right-click knife or pistol to deploy explosive oil drum"
         );
     }
 }
@@ -120,8 +121,9 @@ public void OnMapStart()
 // ── Client State Management ─────────────────────────────────
 void ResetClientState(int client)
 {
-    g_LastSpawn[client]   = 0.0;
-    g_LastButtons[client] = 0;
+    g_LastSpawn[client]      = 0.0;
+    g_LastButtons[client]    = 0;
+    g_LastCooldownMsg[client] = 0.0;
     KillReadyTimer(client);
 }
 
@@ -173,7 +175,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     if (!ZM_IsClientHuman(client))
         return Plugin_Continue;
 
-    // Must have American knife equipped
+    // Must have knife or pistol equipped
     int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
     if (weapon <= 0)
         return Plugin_Continue;
@@ -181,7 +183,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     char classname[64];
     GetEntityClassname(weapon, classname, sizeof(classname));
 
-    if (!StrEqual(classname, "weapon_amerknife"))
+    if (!StrEqual(classname, "weapon_amerknife") &&
+        !StrEqual(classname, "weapon_colt") &&
+        !StrEqual(classname, "weapon_p38"))
         return Plugin_Continue;
 
     // Detect right-click press (rising edge only)
@@ -200,8 +204,12 @@ void TrySpawnDrum(int client)
 
     if (now < g_LastSpawn[client] + cooldown)
     {
-        int remaining = RoundToCeil((g_LastSpawn[client] + cooldown) - now);
-        ZM_PrintToChat(client, "Drum ready in %d seconds.", remaining);
+        if (now - g_LastCooldownMsg[client] >= 1.0)
+        {
+            int remaining = RoundToCeil((g_LastSpawn[client] + cooldown) - now);
+            ZM_PrintToChat(client, "Drum ready in %d seconds.", remaining);
+            g_LastCooldownMsg[client] = now;
+        }
         return;
     }
 
