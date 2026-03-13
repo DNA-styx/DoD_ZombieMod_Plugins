@@ -10,11 +10,11 @@
  * - Simplified from player-grabbing to prop-only manipulation
  * - Integrated with DoD:S Zombie Mod skill system
  * - Ray trace-based prop selection (crosshair aim)
- * - American knife activation with right-click
+ * - Knife or pistol activation with right-click
  * - Removed admin systems, menus, and configuration
  * - Added natural prop settling on release
  * 
- * Version: 1.0.6
+ * Version: 1.0.7
  * =============================================================================
  */
 
@@ -25,10 +25,10 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.6"
-#define PLUGIN_NAME "DoD:S ZM - Human Skill - Barricade Builder"
-#define PLUGIN_AUTHOR "Based on code by Dron-elektron, modified by claude.ai guided by DNA.styx"
-#define PLUGIN_DESCRIPTION "Human skill: Pick up and place in-game props with knife right-click"
+#define PLUGIN_VERSION "1.0.7"
+#define PLUGIN_NAME "DoD:S ZM Human Skill - Barricade Builder"
+#define PLUGIN_AUTHOR "Dron-elektron, modified by claude.ai guided by DNA.styx"
+#define PLUGIN_DESCRIPTION "Human skill: Pick up and place in-game props with knife/pistol right-click"
 
 // Constants
 #define ENTITY_NOT_FOUND -1
@@ -41,7 +41,10 @@
 #define SETTLE_VELOCITY -50.0        // Downward velocity when releasing props
 
 // Weapon definitions for DoD:S
-#define WEAPON_AMERKNIFE "weapon_amerknife"
+#define WEAPON_AMERKNIFE "weapon_amerknife"  // American knife
+#define WEAPON_SPADE "weapon_spade"          // German spade
+#define WEAPON_COLT "weapon_colt"            // American pistol
+#define WEAPON_P38 "weapon_p38"              // German pistol
 
 // ============================================================================
 // GLOBALS
@@ -64,7 +67,7 @@ public Plugin myinfo = {
     author = PLUGIN_AUTHOR,
     description = PLUGIN_DESCRIPTION,
     version = PLUGIN_VERSION,
-    url = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
+    url = ""
 };
 
 public void OnPluginStart() {
@@ -77,7 +80,7 @@ public void OnAllPluginsLoaded()
     // Only register if we haven't already
     if (g_SkillID == ZM_SKILL_INVALID && ZM_IsLoaded())
     {
-        g_SkillID = ZM_RegisterHumanSkill("Barricade Builder", "Move props with knife right-click");
+        g_SkillID = ZM_RegisterHumanSkill("Barricade Builder", "Move props with knife/pistol right-click");
         
         if (g_SkillID != ZM_SKILL_INVALID)
         {
@@ -92,7 +95,7 @@ public void OnLibraryAdded(const char[] name)
     // Only register if we haven't already
     if (StrEqual(name, ZM_LIBRARY) && g_SkillID == ZM_SKILL_INVALID)
     {
-        g_SkillID = ZM_RegisterHumanSkill("Barricade Builder", "Move props with knife right-click");
+        g_SkillID = ZM_RegisterHumanSkill("Barricade Builder", "Move props with knife/pistol right-click");
         
         if (g_SkillID != ZM_SKILL_INVALID)
         {
@@ -141,14 +144,6 @@ void ResetClientState(int client) {
 // ============================================================================
 // ZM API FORWARDS
 // ============================================================================
-
-public void ZM_OnSkillAssigned(int client, ZMSkillID skillID)
-{
-    if (skillID == g_SkillID && ZM_IsClientHuman(client))
-    {
-        ZM_PrintToChat(client, "Barricade Builder equipped! Use knife right-click to move props.");
-    }
-}
 
 public void ZM_OnRoundStart()
 {
@@ -201,9 +196,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     if (!ZM_IsClientHuman(client))
         return Plugin_Continue;
     
-    // Check if player has American knife equipped
-    if (!HasAmericanKnifeEquipped(client)) {
-        // If they don't have knife out but are holding a prop, release it
+    // Check if player has a valid weapon equipped (knife or pistol)
+    if (!HasValidWeaponEquipped(client)) {
+        // If they don't have valid weapon out but are holding a prop, release it
         if (g_heldProp[client] != NO_PROP_HELD) {
             ReleaseProp(client);
         }
@@ -227,8 +222,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     return Plugin_Continue;
 }
 
-// Check if player has American knife equipped
-bool HasAmericanKnifeEquipped(int client) {
+// Check if player has a valid weapon equipped (knife or pistol)
+bool HasValidWeaponEquipped(int client) {
     int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
     
     if (!IsValidEntity(weapon)) {
@@ -238,7 +233,11 @@ bool HasAmericanKnifeEquipped(int client) {
     char classname[64];
     GetEntityClassname(weapon, classname, sizeof(classname));
     
-    return StrEqual(classname, WEAPON_AMERKNIFE, false);
+    // Check for knives or pistols
+    return (StrEqual(classname, WEAPON_AMERKNIFE, false) || 
+            StrEqual(classname, WEAPON_SPADE, false) ||
+            StrEqual(classname, WEAPON_COLT, false) || 
+            StrEqual(classname, WEAPON_P38, false));
 }
 
 // Try to grab the nearest prop
