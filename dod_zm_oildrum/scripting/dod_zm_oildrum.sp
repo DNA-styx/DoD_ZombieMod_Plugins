@@ -26,7 +26,7 @@ public Plugin myinfo =
 {
     name = PLUGIN_NAME,
     author = "KTM, Converted for ZM by ChatGPT & claude.ai guided by DNA.styx",
-    description = "Human skill: Knife or pistol right-click to deploy explosive oil drums",
+    description = "Human skill: Pistol right-click to deploy explosive oil drums",
     version = PLUGIN_VERSION,
     url = "https://github.com/DNA-styx/DoD_ZombieMod_Plugins"
 };
@@ -86,7 +86,7 @@ public void OnAllPluginsLoaded()
     {
         g_SkillID = ZM_RegisterHumanSkill(
             "Oil Drum Spawner",
-            "Right-click knife or pistol to deploy explosive oil drum"
+            "Right-click pistol to deploy explosive oil drum"
         );
     }
 }
@@ -98,7 +98,7 @@ public void OnLibraryAdded(const char[] name)
     {
         g_SkillID = ZM_RegisterHumanSkill(
             "Oil Drum Spawner",
-            "Right-click knife or pistol to deploy explosive oil drum"
+            "Right-click pistol to deploy explosive oil drum"
         );
     }
 }
@@ -175,7 +175,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     if (!ZM_IsClientHuman(client))
         return Plugin_Continue;
 
-    // Must have knife or pistol equipped
+    // Must have pistol equipped
     int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
     if (weapon <= 0)
         return Plugin_Continue;
@@ -183,8 +183,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
     char classname[64];
     GetEntityClassname(weapon, classname, sizeof(classname));
 
-    if (!StrEqual(classname, "weapon_amerknife") &&
-        !StrEqual(classname, "weapon_colt") &&
+    if (!StrEqual(classname, "weapon_colt") &&
         !StrEqual(classname, "weapon_p38"))
         return Plugin_Continue;
 
