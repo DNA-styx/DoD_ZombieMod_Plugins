@@ -85,8 +85,8 @@ public void OnAllPluginsLoaded()
     if (g_SkillID == ZM_SKILL_INVALID && ZM_IsLoaded())
     {
         g_SkillID = ZM_RegisterHumanSkill(
-            "Oil Drum Spawner",
-            "Right-click pistol to deploy explosive oil drum"
+            "Spawn Explosive Drums",
+            "Pistol right-click"
         );
     }
 }
@@ -97,8 +97,8 @@ public void OnLibraryAdded(const char[] name)
     if (StrEqual(name, ZM_LIBRARY) && g_SkillID == ZM_SKILL_INVALID)
     {
         g_SkillID = ZM_RegisterHumanSkill(
-            "Oil Drum Spawner",
-            "Right-click pistol to deploy explosive oil drum"
+            "Spawn Explosive Drums",
+            "Pistol right-click"
         );
     }
 }
@@ -206,7 +206,7 @@ void TrySpawnDrum(int client)
         if (now - g_LastCooldownMsg[client] >= 1.0)
         {
             int remaining = RoundToCeil((g_LastSpawn[client] + cooldown) - now);
-            ZM_PrintToChat(client, "Drum ready in %d seconds.", remaining);
+            PrintToChat(client, " \x04[ZM]\x01 Drum ready in %d seconds.", remaining);
             g_LastCooldownMsg[client] = now;
         }
         return;
@@ -230,7 +230,7 @@ void TrySpawnDrum(int client)
     int drum = CreateEntityByName("prop_physics_override");
     if (drum == -1)
     {
-        ZM_PrintToChat(client, "Failed to place drum.");
+        PrintToChat(client, " \x04[ZM]\x01 Failed to place drum.");
         ScheduleReadyNotification(client, cooldown);
         return;
     }
@@ -283,7 +283,7 @@ public Action Timer_DrumReady(Handle timer, int userId)
             && ZM_IsClientHuman(client)
             && ZM_GetClientSkill(client) == g_SkillID)
         {
-            ZM_PrintToChat(client, "New drum is ready!");
+            PrintToChat(client, " \x04[ZM]\x01 New drum is ready!");
         }
     }
 
