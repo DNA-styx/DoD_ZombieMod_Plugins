@@ -8,7 +8,7 @@
  * Human skill plugins:  register via ZM_RegisterHumanSkill()
  * Zombie class plugins: register via ZM_RegisterZombieClass()
  *
- * Version: 1.3.0
+ * Version: 1.3.1
  * =============================================================================
  */
 
@@ -19,6 +19,25 @@
 
 /* Library name used in OnLibraryAdded / OnLibraryRemoved */
 #define ZM_LIBRARY "dod_zm_core"
+
+// ============================================================================
+// CHAT PREFIX CONSTANTS
+// Use these in PrintToChat / PrintToChatAll for consistent formatting.
+// ============================================================================
+
+/**
+ * Olive/yellow prefix for messages sent to a single player.
+ * Example: PrintToChat(client, ZM_PREFIX_PERSONAL " Skill activated!");
+ */
+#define ZM_PREFIX_PERSONAL "\x04[ZM]\x01"
+
+/**
+ * Prefix for messages broadcast to all players.
+ * Uses \x04 (confirmed green in DoD:S) rather than \x03 which renders
+ * as team colour and appears white for some players.
+ * Example: PrintToChatAll(ZM_PREFIX_BROADCAST " %N did something!", client);
+ */
+#define ZM_PREFIX_BROADCAST "\x04[ZM]\x01"
 
 // ============================================================================
 // HUMAN SKILL CONSTANTS
@@ -221,6 +240,35 @@ forward void ZM_OnZombieDeath(int client, ZMClassID classID);
 stock bool ZM_IsLoaded()
 {
 	return LibraryExists(ZM_LIBRARY);
+}
+
+/**
+ * Send a chat message to one player with the standard [ZM] prefix.
+ * Use this instead of PrintToChat with raw colour codes.
+ *
+ * @param client    Client index
+ * @param format    Format string (supports %t for translations, %s, %d etc.)
+ * @param ...       Format arguments
+ */
+stock void ZM_Chat(int client, const char[] format, any ...)
+{
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 3);
+	PrintToChat(client, "\x04[ZM]\x01 %s", buffer);
+}
+
+/**
+ * Broadcast a chat message to all players with the standard [ZM] prefix.
+ * Use this instead of PrintToChatAll with raw colour codes.
+ *
+ * @param format    Format string (supports %t for translations, %s, %d etc.)
+ * @param ...       Format arguments
+ */
+stock void ZM_ChatAll(const char[] format, any ...)
+{
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 2);
+	PrintToChatAll("\x04[ZM]\x01 %s", buffer);
 }
 
 // ============================================================================

@@ -11,7 +11,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.3.0"
+#define PLUGIN_VERSION "1.4.1"
 #define PLUGIN_NAME "DoD:S ZM - Human Skill - Oil Drum Spawner"
 
 // ── Models ──────────────────────────────────────────────────
@@ -157,6 +157,15 @@ public void ZM_OnClientDeath(int client)
     KillReadyTimer(client);
 }
 
+// ── Skill Assignment ────────────────────────────────────────
+public void ZM_OnSkillAssigned(int client, ZMSkillID skillID)
+{
+    if (skillID == g_SkillID)
+    {
+        PrintCenterText(client, "Pistol right-click spawns oil drum!");
+    }
+}
+
 // ── Ability Activation ──────────────────────────────────────
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3])
 {
@@ -206,7 +215,7 @@ void TrySpawnDrum(int client)
         if (now - g_LastCooldownMsg[client] >= 1.0)
         {
             int remaining = RoundToCeil((g_LastSpawn[client] + cooldown) - now);
-            PrintToChat(client, " \x04[ZM]\x01 Drum ready in %d seconds.", remaining);
+            ZM_Chat(client, "Drum ready in %d seconds.", remaining);
             g_LastCooldownMsg[client] = now;
         }
         return;
@@ -230,7 +239,7 @@ void TrySpawnDrum(int client)
     int drum = CreateEntityByName("prop_physics_override");
     if (drum == -1)
     {
-        PrintToChat(client, " \x04[ZM]\x01 Failed to place drum.");
+        ZM_Chat(client, "Failed to place drum.");
         ScheduleReadyNotification(client, cooldown);
         return;
     }
@@ -257,7 +266,8 @@ void TrySpawnDrum(int client)
 
     ScheduleReadyNotification(client, cooldown);
 
-    TE_SetupBeamRingPoint(spawnPos, 10.0, 150.0,
+    float radius = float(gC_Radius.IntValue);
+    TE_SetupBeamRingPoint(spawnPos, 10.0, radius,
         g_BeamSprite, g_HaloSprite,
         0, 10, 0.6, 10.0, 0.5,
         redColor, 20, 0);
@@ -283,7 +293,7 @@ public Action Timer_DrumReady(Handle timer, int userId)
             && ZM_IsClientHuman(client)
             && ZM_GetClientSkill(client) == g_SkillID)
         {
-            PrintToChat(client, " \x04[ZM]\x01 New drum is ready!");
+            ZM_Chat(client, "New drum is ready!");
         }
     }
 
